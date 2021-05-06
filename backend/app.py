@@ -1,5 +1,3 @@
-import datetime
-from datetime import datetime
 import json
 import os
 from uuid import uuid4
@@ -29,8 +27,25 @@ class Person(db.Document):
     user_id = db.UUIDField(binary=False, default=uuid4(), required=True)
 
 
+class BilingCard(db.document):
+    title = db.StringField()
+    pan = db.StringField()
+    expiry_mm = db.StringField()
+    expiry_yyy = db.StringField()
+    security_code = db.StringField()
+    date = db.StringField()
+    card_id = db.UUIDField(binary=False, default=uuid4(), required=True)
+
+
+class Transfer(db.document):
+    friend_id = db.StringField()
+    total_to_pay = db.IntField()
+    billing_card = BilingCard
+    person = db.relationship('Person', back_populates='person')
+
+
 @app.route("/account/person", methods=["POST"])
-def save():
+def save_person():
     data = json.loads(request.data)
     person = Person(first_name=data['first_name'], last_name=data['last_name'],
                     birthday=data['birthday'],
@@ -39,9 +54,24 @@ def save():
 
 
 @app.route("/account/friends")
-def list():
+def list_friends():
     people = Person.objects().to_json()
     return Response(people, mimetype="application/json", status=200)
+
+
+@app.route("/account/card", methods=["POST"])
+def save_card():
+    data = json.loads(request.data)
+    card = BilingCard(title=data['first_name'], pan=data['last_name'],
+                      expiry_mm=data['expiry_mm'], expiry_yyy=data['expiry_yyy'],
+                      security_code=data['security_code'], date=data['date']).save()
+    return jsonify(card)
+
+
+@app.route("/account/cards")
+def list_cards():
+    cards = BilingCard.objects().to_json()
+    return Response(cards, mimetype="application/json", status=200)
 
 
 if __name__ == "__main__":
