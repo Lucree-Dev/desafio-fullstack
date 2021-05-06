@@ -27,7 +27,7 @@ class Person(db.Document):
     user_id = db.UUIDField(binary=False, default=uuid4(), required=True)
 
 
-class BilingCard(db.document):
+class BillingCard(db.Document):
     title = db.StringField()
     pan = db.StringField()
     expiry_mm = db.StringField()
@@ -37,10 +37,10 @@ class BilingCard(db.document):
     card_id = db.UUIDField(binary=False, default=uuid4(), required=True)
 
 
-class Transfer(db.document):
+class Transfer(db.Document):
     friend_id = db.StringField()
     total_to_pay = db.IntField()
-    billing_card = BilingCard
+    billing_card = BillingCard
     person = db.relationship('Person', back_populates='person')
 
 
@@ -62,15 +62,15 @@ def list_friends():
 @app.route("/account/card", methods=["POST"])
 def save_card():
     data = json.loads(request.data)
-    card = BilingCard(title=data['first_name'], pan=data['last_name'],
-                      expiry_mm=data['expiry_mm'], expiry_yyy=data['expiry_yyy'],
-                      security_code=data['security_code'], date=data['date']).save()
+    card = BillingCard(title=data['title'], pan=data['pan'],
+                       expiry_mm=data['expiry_mm'], expiry_yyy=data['expiry_yyy'],
+                       security_code=data['security_code'], date=data['date']).save()
     return jsonify(card)
 
 
 @app.route("/account/cards")
 def list_cards():
-    cards = BilingCard.objects().to_json()
+    cards = BillingCard.objects().to_json()
     return Response(cards, mimetype="application/json", status=200)
 
 
