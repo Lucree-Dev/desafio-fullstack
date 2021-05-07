@@ -3,6 +3,7 @@ import json
 import os
 from uuid import uuid4
 
+from flask_cors import CORS
 from flask import Flask, Response, request, jsonify
 from flask_mongoengine import MongoEngine
 from werkzeug.security import generate_password_hash
@@ -17,6 +18,7 @@ app.config['MONGODB_SETTINGS'] = {
 
 db = MongoEngine()
 db.init_app(app)
+CORS(app)
 
 
 class Person(db.Document):
