@@ -19,11 +19,11 @@ db.init_app(app)
 
 
 class Person(db.Document):
-    first_name = db.StringField(max_length=50)
-    last_name = db.StringField(max_length=50)
+    first_name = db.StringField()
+    last_name = db.StringField()
     birthday = db.StringField()
-    password = db.StringField(max_length=200)
-    username = db.StringField(max_length=200)
+    password = db.StringField()
+    username = db.StringField()
     user_id = db.UUIDField(binary=False, default=uuid4(), required=True)
 
 
@@ -31,17 +31,17 @@ class BillingCard(db.Document):
     title = db.StringField()
     pan = db.StringField()
     expiry_mm = db.StringField()
-    expiry_yyy = db.StringField()
+    expiry_yyyy = db.StringField()
     security_code = db.StringField()
     date = db.StringField()
     card_id = db.UUIDField(binary=False, default=uuid4(), required=True)
 
 
 class Transfer(db.Document):
+    user_id = db.StringField()
     friend_id = db.StringField()
     total_to_pay = db.IntField()
     billing_card = BillingCard
-    person = db.relationship('Person', back_populates='person')
 
 
 @app.route("/account/person", methods=["POST"])
@@ -49,8 +49,9 @@ def save_person():
     data = json.loads(request.data)
     person = Person(first_name=data['first_name'], last_name=data['last_name'],
                     birthday=data['birthday'],
-                    password=generate_password_hash(data['password']), username=data['username']).save()
-    return jsonify(person)
+                    password=generate_password_hash(data['password']), username=data['username'])
+    person.save()
+    return Response('Successfully created person ', mimetype="application/json", status=200)
 
 
 @app.route("/account/friends")
@@ -63,9 +64,10 @@ def list_friends():
 def save_card():
     data = json.loads(request.data)
     card = BillingCard(title=data['title'], pan=data['pan'],
-                       expiry_mm=data['expiry_mm'], expiry_yyy=data['expiry_yyy'],
-                       security_code=data['security_code'], date=data['date']).save()
-    return jsonify(card)
+                       expiry_mm=data['expiry_mm'], expiry_yyyy=data['expiry_yyyy'],
+                       security_code=data['security_code'], date=data['date'])
+    card.save()
+    return Response('Successfully created billing card', mimetype="application/json", status=200)
 
 
 @app.route("/account/cards")
