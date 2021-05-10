@@ -3,10 +3,10 @@ import json
 import os
 from uuid import uuid4
 
-from flask_cors import CORS
-from flask import Flask, Response, request, jsonify
+import werkzeug
+from flask import Flask, Response, request
+from flask_cors import CORS, cross_origin
 from flask_mongoengine import MongoEngine
-from werkzeug.security import generate_password_hash
 
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {
@@ -15,7 +15,6 @@ app.config['MONGODB_SETTINGS'] = {
     'password': os.environ['MONGODB_PASSWORD'],
     'db': 'webapp'
 }
-
 db = MongoEngine()
 db.init_app(app)
 CORS(app)
@@ -27,7 +26,7 @@ class Person(db.Document):
     birthday = db.StringField()
     password = db.StringField()
     username = db.StringField()
-    user_id = db.StringField(default=str(uuid4()))
+    user_id = db.StringField()
 
 
 class BillingCard(db.Document):
@@ -37,15 +36,16 @@ class BillingCard(db.Document):
     expiry_yyyy = db.StringField()
     security_code = db.StringField()
     date = db.StringField()
-    card_id = db.StringField(default=str(uuid4()))
+    card_id = db.StringField()
 
 
 class Transfer(db.Document):
     user_id = db.StringField()
     friend_id = db.StringField()
     total_to_transfer = db.IntField()
-    date = db.DateTimeField(default=datetime.date.today())
+    date = db.DateTimeField()
     billing_card = db.StringField()
+    transfer_id = db.StringField()
 
 
 class TransferDto:
@@ -58,17 +58,17 @@ class TransferDto:
 
 
 @app.route("/account/person", methods=["POST"])
-def save_person():
+def save_user():
     try:
         data = json.loads(request.data)
         person = Person(first_name=data['first_name'], last_name=data['last_name'],
-                        birthday=data['birthday'],
-                        password=generate_password_hash(data['password']), username=data['username'])
+                        birthday=data['birthday'], user_id=str(uuid4()),
+                        password=werkzeug.security.generate_password_hash(data['password']), username=data['username'])
         person.save()
     except:
-        return Response('Error when registering person', mimetype="application/json", status=400)
+        return Response('Error when registering user', mimetype="application/json", status=400)
 
-    return Response('Successfully created person ', mimetype="application/json", status=200)
+    return Response('Successfully created user ', mimetype="application/json", status=200)
 
 
 @app.route("/account/friends")
@@ -81,7 +81,7 @@ def list_friends():
 def save_card():
     try:
         data = json.loads(request.data)
-        card = BillingCard(title=data['title'], pan=data['pan'],
+        card = BillingCard(title=data['title'], pan=data['pan'], card_id=str(uuid4()),
                            expiry_mm=data['expiry_mm'], expiry_yyyy=data['expiry_yyyy'],
                            security_code=data['security_code'], date=data['date'])
         card.save()
@@ -103,7 +103,7 @@ def save_transfer():
         data = json.loads(request.data)
         card = BillingCard.objects(card_id=data['billing_card']['card_id']).first()
         transfer = Transfer(friend_id=data['friend_id'], user_id=data['user_id'],
-                            billing_card=card['card_id'],
+                            billing_card=card['card_id'], date=datetime.date.today(),
                             total_to_transfer=data['total_to_transfer'])
         transfer.save()
     except:

@@ -1,5 +1,4 @@
 import './App.css';
-import Header from "./components/header";
 import ListPeople from "./components/listPeople";
 import {useEffect, useState} from "react";
 import withListLoading from './components/withListLoading';
@@ -12,7 +11,7 @@ function App() {
     });
 
     useEffect(() => {
-        setAppState({loading: true});
+        setAppState({loading: true , people: null });
         const apiUrl = `http://localhost:5000/account/friends`;
         fetch(apiUrl)
             .then((res) => res.json())
@@ -22,10 +21,6 @@ function App() {
     }, [setAppState]);
     return (
         <div className='App'>
-            <Header/>
-            <div className='container'>
-                <h1>List of people</h1>
-            </div>
             <div className='repo-container'>
                 <ListLoading isLoading={appState.loading} people={appState.people}/>
             </div>
